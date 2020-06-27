@@ -1,6 +1,6 @@
-# Reddbot - Telegram Reddcoin Tipbot.
+# Pyrktips - Telegram Pyrk Tipbot.
  
-#### Reddcoin crypto currency tipbot for [Telegram](https://telegram.org)
+#### Pyrk crypto currency tipbot for [Telegram](https://telegram.org)
 
 
 ## Dependencies 
@@ -10,12 +10,12 @@
 *  `pip3 install beautifulsoup4`
 *  `pip3 install python-telegram-bot --upgrade`
 
-* In order to run the tip-bot effectively, a Bitcoin-core based client is needed. For this git Reddcoin-Core is used , but any major alternate crypto-currency client could easily be incorperated. 
+* In order to run the tip-bot effectively, a Bitcoin-core based client is needed. For this git Pyrk-Core is used , but any major alternate crypto-currency client could easily be incorperated. 
 
 ## Setup
 
 * Download the git
-`git clone https://github.com/samgos/reddbot-telegram`
+`git clone https://github.com/mrmikeo/pyrktips-telegram`
 
 * Setup a bot with the user @BotFather through PM on Telegram, after going through a setup you will be given a bot token. Edit the command.py file and replace the parameter 'BOT_TOKEN' with the one you just recieved. 
 
