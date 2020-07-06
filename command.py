@@ -177,7 +177,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                     bot.get_updates(offset = update_id+1)
                 elif "@" in target:
                     target = target[1:]
-                    user = update.message.from_user.username 
+                    user = current_updates['message']['from']['username']
                     core = "/usr/bin/zcoin-cli"
                     result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
                     balance = float((result.stdout.strip()).decode("utf-8"))
@@ -206,10 +206,14 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 user = current_updates['message']['from']['username']
                 bot.send_message(group_id, "Initiating commands /tip & /withdraw have a specfic format,\n use them like so:" + "\n \n Parameters: \n user = target user to tip \n amount = amount of zcoin to utilise \n address = zcoin address to withdraw to \n \n Tipping format: \n /tip user amount \n \n Withdrawing format: \n /withdraw address amount")
                 bot.get_updates(offset = update_id+1)
+            else:
+                bot.send_message(group_id, 'Please set a username from the Telegram Settings')
+                bot.get_updates(offset = update_id+1)
     except:
         print('Some kind of error on', text)
         bot.get_updates(offset = update_id+1)
-starter()
+if __name__ == "__main__":
+    starter()
 
 
 '''MUST BE ADDED'''
