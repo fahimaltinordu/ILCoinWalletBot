@@ -1,176 +1,229 @@
--*- coding: utf-8 -*-
-
-import json
-import codecs
-import requests
+import requests, json, re, subprocess
 from bs4 import BeautifulSoup, SoupStrainer
-import re
-import subprocess
-from telegram.ext.dispatcher import run_async
-from telegram.ext import Updater
 from html import escape
+import codecs
 
-updater = Updater(token='BOT_TOKEN')
-dispatcher = updater.dispatcher
+class BoilerPlate:
+    def __init__(self, token):
+        self.token = token
+        self.api_url = "https://api.telegram.org/bot{}/".format(token)
 
-import logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-					level=logging.INFO)
+    def get_updates(self, offset=0, timeout=10000):                 #FOR GETTING UPDATES
+        function = 'getUpdates'
+        fieldss = {'timeout' : timeout, 'offset': offset}
+        send = requests.get(self.api_url + function, fieldss)
+        result_json = send.json()['result']
+        return result_json
 
-def commands(bot, update):
-	user = update.message.from_user.username 
-	bot.send_message(chat_id=update.message.chat_id, text="Initiating commands /tip & /withdraw have a specfic format,\n use them like so:" + "\n \n Parameters: \n <user> = target user to tip \n <amount> = amount of zcoin to utilise \n <address> = zcoin address to withdraw to \n \n Tipping format: \n /tip <user> <amount> \n \n Withdrawing format: \n /withdraw <address> <amount>")
+    def send_message(self, chat_id, text):                          #FOR SENDING MESSAGES
+        fieldss = {'chat_id': chat_id, 'text': text, 'parse_mode': 'HTML'}
+        function = 'sendMessage'
+        send = requests.post(self.api_url + function, fieldss)
+        return send
+    def send_message_two(self, chat_id, text, reply_markup, one_time_keyboard=False, resize_keyboard=True):     #FOR SENDING MESSAGES WITH A BOT KEYBOARD. PASS [['KEYBOARD BUTTON NAME']]
+        reply_markup = json.dumps({'keyboard': reply_markup, 'one_time_keyboard': one_time_keyboard, 'resize_keyboard': resize_keyboard})
+        fieldss = {'chat_id': chat_id, 'text': text, 'parse_mode': 'HTML', 'reply_markup': reply_markup}
+        function = 'sendMessage'
+        send = requests.post(self.api_url + function, fieldss).json()
+        return send
+    
+    def deleteWebhook(self):                #CALL THIS AFTER CURRENT_UPDATE IF THERE IS A WEBHOOK ERROR
+        function = 'deleteWebhook'
+        send = requests.post(self.api_url + function)
+        return send
 
-def help(bot, update):
-	bot.send_message(chat_id=update.message.chat_id, text="The following commands are at your disposal: /hi , /commands , /deposit , /tip , /withdraw , /price , /marketcap or /balance")
+token = 'BOT_TOKEN'
+offset = 0                  #MODIFY TO -1 TO READ ONLY THE LAST MESSAGE AND IGNORE ALL PREVIOUS MESSAGE. OTHERWISE DO NO CHANGE
+bot = BoilerPlate(token)    #bot.get_updates(offset = update_id+1) IS USED TO PREVENT THE BOT FROM READING THE SAME MESSAGE
 
-def deposit(bot, update):
-	user = update.message.from_user.username
-	if user is None:
-		bot.send_message(chat_id=update.message.chat_id, text="Please set a telegram username in your profile settings!")
-	else:
-		address = "/usr/bin/zcoin-cli"
-		result = subprocess.run([address,"getaccountaddress",user],stdout=subprocess.PIPE)
-		clean = (result.stdout.strip()).decode("utf-8")
-		bot.send_message(chat_id=update.message.chat_id, text="@{0} your depositing address is: {1}".format(user,clean))
+def starter():
+    global offset
+    while True:
+        all_updates = bot.get_updates(offset)
+        for current_updates in all_updates:
+            #print(current_updates)
+            update_id = current_updates['update_id']
+            group_id = current_updates['message']['chat']['id']
+            sender_id = current_updates['message']['from']['id']
+            dict_checker = []
+            for keys in current_updates.get('message'):
+                dict_checker.append(keys)
+            bot_message_handler(current_updates, update_id, sender_id, group_id, dict_checker)
 
-def tip(bot,update):
-	user = update.message.from_user.username
-	target = update.message.text[5:]
-	amount =  target.split(" ")[1]
-	target =  target.split(" ")[0]
-	if user is None:
-		bot.send_message(chat_id=update.message.chat_id, text="Please set a telegram username in your profile settings!")
-	else:
-		machine = "@Reddcoin_bot"
-		if target == machine:
-			bot.send_message(chat_id=update.message.chat_id, text="HODL.")
-		elif "@" in target:
-			target = target[1:]
-			user = update.message.from_user.username 
-			core = "/usr/bin/zcoin-cli"
-			result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
-			balance = float((result.stdout.strip()).decode("utf-8"))
-			amount = float(amount)
-			if balance < amount:
-				bot.send_message(chat_id=update.message.chat_id, text="@{0} you have insufficent funds.".format(user))
-			elif target == user:
-				bot.send_message(chat_id=update.message.chat_id, text="You can't tip yourself silly.")
-			else:
-				balance = str(balance)
-				amount = str(amount) 
-				tx = subprocess.run([core,"move",user,target,amount],stdout=subprocess.PIPE)
-				bot.send_message(chat_id=update.message.chat_id, text="@{0} tipped @{1} of {2} zcoin".format(user, target, amount))
-		else: 
-			bot.send_message(chat_id=update.message.chat_id, text="Error that user is not applicable.")
+def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_checker):
+    global offset
+    text = current_updates['message']['text']
+    try:
+        if text == '/start' or text == '/help':
+            bot.send_message(group_id, ("The following commands are at your disposal:\n/hi\n/moon\n/help\n/commands\n/price\n/marketcap\n/balance\n/deposit\n/withdraw\n/tip"))
+            bot.get_updates(offset = update_id+1)
 
-def balance(bot,update):
-	quote_page = requests.get('https://www.worldcoinindex.com/coin/zcoin')
-	strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
-	soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
-	name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coinprice'})
-	name = name_box.text.replace("\n","")
-	price = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
-	price = re.sub("[^0-9^.]", "", price)
-	price = float(price)
-	user = update.message.from_user.username
-	if user is None:
-		bot.send_message(chat_id=update.message.chat_id, text="Please set a telegram username in your profile settings!")
-	else:
-		core = "/usr/bin/zcoin-cli"
-		result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
-		clean = (result.stdout.strip()).decode("utf-8")
-		balance  = float(clean)
-		fiat_balance = balance * price
-		fiat_balance = str(round(fiat_balance,3))
-		balance =  str(round(balance,3))
-		bot.send_message(chat_id=update.message.chat_id, text="@{0} your current balance is: {1} zcoin ≈  ${2}".format(user,balance,fiat_balance))
+        if  text == '/hi':
+            first = current_updates['message']['from']['first_name']
+            bot.send_message(group_id, f'Hello {first}, How are you doing today?')
+            bot.get_updates(offset = update_id+1)
 
-def price(bot,update):
-	quote_page = requests.get('https://www.worldcoinindex.com/coin/zcoin')
-	strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
-	soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
-	name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coinprice'})
-	name = name_box.text.replace("\n","")
-	price = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
-	fiat = soup.find('span', attrs={'class': ''})
-	kkz = fiat.text.replace("\n","")
-	percent = re.sub(r'\n\s*\n', r'\n\n', kkz.strip(), flags=re.M)
-	#quote_page = requests.get('https://bittrex.com/api/v1.1/public/getticker?market=btc-rdd')
-	#soup = BeautifulSoup(quote_page.content, 'html.parser').text
-	#btc = soup[80:]
-	#sats = btc[:-2]
-	#bot.send_message(chat_id=update.message.chat_id, text="zcoin is valued at {0} Δ {1} ≈ {2}".format(price,percent,sats) + " ฿")
-	bot.send_message(chat_id=update.message.chat_id, text="zcoin is valued at {0} Δ {1}".format(price,percent) )
+        if  text == '/price':
+            quote_page = requests.get('https://www.worldcoinindex.com/coin/zcoin')
+            strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
+            soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
+            name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coinprice'})
+            name = name_box.text.replace("\n","")
+            price = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
+            fiat = soup.find('span', attrs={'class': ''})
+            kkz = fiat.text.replace("\n","")
+            percent = re.sub(r'\n\s*\n', r'\n\n', kkz.strip(), flags=re.M)
+            #quote_page = requests.get('https://bittrex.com/api/v1.1/public/getticker?market=btc-rdd')
+            #soup = BeautifulSoup(quote_page.content, 'html.parser').text
+            #btc = soup[80:]
+            #sats = btc[:-2]
+            bot.send_message(group_id, f'zcoin is valued at {price} Δ {percent}')
+            bot.get_updates(offset = update_id+1)
+        
 
-def withdraw(bot,update):
-	user = update.message.from_user.username
-	if user is None:
-		bot.send_message(chat_id=update.message.chat_id, text="Please set a telegram username in your profile settings!")
-	else:
-		target = update.message.text[9:]
-		address = target[:35]
-		address = ''.join(str(e) for e in address)
-		target = target.replace(target[:35], '')
-		amount = float(target)
-		core = "/usr/bin/zcoin-cli"
-		result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
-		clean = (result.stdout.strip()).decode("utf-8")
-		balance = float(clean)
-		if balance < amount:
-			bot.send_message(chat_id=update.message.chat_id, text="@{0} you have insufficent funds.".format(user))
-		else:
-			amount = str(amount)
-			tx = subprocess.run([core,"sendfrom",user,address,amount],stdout=subprocess.PIPE)
-			bot.send_message(chat_id=update.message.chat_id, text="@{0} has successfully withdrew to address: {1} of {2} RDD" .format(user,address,amount))
+        if  text == '/deposit':
+            if 'username' in current_updates['message']['from']:
+                user = current_updates['message']['from']['username']
+                address = "/usr/bin/zcoin-cli"
+                result = subprocess.run([address,"getaccountaddress",user],stdout=subprocess.PIPE)
+                clean = (result.stdout.strip()).decode("utf-8")
+                bot.send_message(group_id, f'@{user} your depositing address is: {clean}')
+                bot.get_updates(offset = update_id+1)
+            else:
+                bot.send_message(group_id, 'Please set a username from the Telegram Settings')
+                bot.get_updates(offset = update_id+1)
 
-def hi(bot,update):
-	user = update.message.from_user.username
-	bot.send_message(chat_id=update.message.chat_id, text="Hello @{0}, how are you doing today?".format(user))
+        if  text == '/withdraw':
+            bot.send_message(group_id, 'Wrong Format. Check /commands Send a Message Like this Please:\n\n/withdraw (your wallet address) (amount)\n\nexample:\n\n/withdraw a8ULhhDgfdSiXJhSZVdhb8EuDc6R3ogsaM 5')
+            bot.get_updates(offset = update_id+1)
 
-def moon(bot,update):
-        bot.send_message(chat_id=update.message.chat_id, text="Moon mission inbound!")
 
-def marketcap(bot,update):
-	quote_page = requests.get('https://www.worldcoinindex.com/coin/zcoin')
-	strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
-	soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
-	name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coin-marketcap'})
-	name = name_box.text.replace("\n","")
-	mc = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
-	bot.send_message(chat_id=update.message.chat_id, text="The current market cap of zcoin is valued at {0}".format(mc))
+        if '/withdraw' in text and len(text) > 9:
+            if 'username' in current_updates['message']['from']:
+                user = current_updates['message']['from']['username']
+                target = text[9:]
+                address = target[:35]
+                address = ''.join(str(e) for e in address)
+                target = target.replace(target[:35], '')
+                amount = float(target)
+                core = "/usr/bin/zcoin-cli"
+                result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
+                clean = (result.stdout.strip()).decode("utf-8")
+                balance = float(clean)
+                if balance < amount:
+                    bot.send_message(group_id, f'@{user} you have insufficent funds.')
+                    bot.get_updates(offset = update_id+1)
+                else:
+                    amount = str(amount)
+                    tx = subprocess.run([core,"sendfrom",user,address,amount],stdout=subprocess.PIPE)
+                    bot.send_message(group_id, f'@{user} has successfully withdrew to address: {address} of {amount} RDD')
+                    bot.get_updates(offset = update_id+1)
+            else:
+                bot.send_message(group_id, 'Please set a username from the Telegram Settings')
+                bot.get_updates(offset = update_id+1)
+        
+        if  text == '/balance':
+            if 'username' in current_updates['message']['from']:
+                quote_page = requests.get('https://www.worldcoinindex.com/coin/zcoin')
+                strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
+                soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
+                name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coinprice'})
+                name = name_box.text.replace("\n","")
+                price = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
+                price = re.sub("[^0-9^.]", "", price)
+                price = float(price)
+                user = current_updates['message']['from']['username']
+                core = "/usr/bin/zcoin-cli"
+                result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
+                clean = (result.stdout.strip()).decode("utf-8")
+                balance  = float(clean)
+                fiat_balance = balance * price
+                fiat_balance = str(round(fiat_balance,3))
+                balance =  str(round(balance,3))
+                bot.send_message(group_id, f'@{user} your current balance is: {balance} zcoin ≈  ${fiat_balance}')
+                bot.get_updates(offset = update_id+1)
+            else:
+                bot.send_message(group_id, 'Please set a username from the Telegram Settings')
+                bot.get_updates(offset = update_id+1)
 
-from telegram.ext import CommandHandler
+        if  text == '/moon':
+            bot.send_message(group_id, "Moon mission inbound!")
+            bot.get_updates(offset = update_id+1)
 
-commands_handler = CommandHandler('commands', commands)
-dispatcher.add_handler(commands_handler)
+        if  text == '/marketcap':
+            quote_page = requests.get('https://www.worldcoinindex.com/coin/zcoin')
+            strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
+            soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
+            name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coin-marketcap'})
+            name = name_box.text.replace("\n","")
+            mc = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
+            bot.send_message(group_id, f"The current market cap of zcoin is valued at {mc}")
+            bot.get_updates(offset = update_id+1)
 
-moon_handler = CommandHandler('moon', moon)
-dispatcher.add_handler(moon_handler)
 
-hi_handler = CommandHandler('hi', hi)
-dispatcher.add_handler(hi_handler)
+        if text == '/tip':
+            bot.send_message(group_id, 'Wrong Format. Check /commands. Send the command like this\n\n /tip (username) (amount)\n\nexample\n\n /tip @Sakib0194 10')
+            bot.get_updates(offset = update_id+1)
 
-withdraw_handler = CommandHandler('withdraw', withdraw)
-dispatcher.add_handler(withdraw_handler)
+        if '/tip' in text and len(text) > 4:
+            if 'username' in current_updates['message']['from']:
+                user = current_updates['message']['from']['username']
+                target = text[5:]
+                amount =  target.split(" ")[1]
+                target =  target.split(" ")[0]
+                machine = "@Reddcoin_bot"
+                if target == machine:
+                    bot.send_message(group_id, "HODL.")
+                    bot.get_updates(offset = update_id+1)
+                elif "@" in target:
+                    target = target[1:]
+                    user = update.message.from_user.username 
+                    core = "/usr/bin/zcoin-cli"
+                    result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
+                    balance = float((result.stdout.strip()).decode("utf-8"))
+                    amount = float(amount)
+                    if balance < amount:
+                        bot.send_message(group_id, f"@{user} you have insufficent funds.")
+                        bot.get_updates(offset = update_id+1)
+                    elif target == user:
+                        bot.send_message(group_id, text="You can't tip yourself silly.")
+                        bot.get_updates(offset = update_id+1)
+                    else:
+                        balance = str(balance)
+                        amount = str(amount) 
+                        tx = subprocess.run([core,"move",user,target,amount],stdout=subprocess.PIPE)
+                        bot.send_message(group_id, f"@{user} tipped @{target} of {amount} zcoin")
+                        bot.get_updates(offset = update_id+1)
+                else: 
+                    bot.send_message(group_id, "Error that user is not applicable.")
+                    bot.get_updates(offset = update_id+1)
+            else:
+                bot.send_message(group_id, 'Please set a username from the Telegram Settings')
+                bot.get_updates(offset = update_id+1)
 
-marketcap_handler = CommandHandler('marketcap', marketcap)
-dispatcher.add_handler(marketcap_handler)
+        if text == '/commands':
+            if 'username' in current_updates['message']['from']:
+                user = current_updates['message']['from']['username']
+                bot.send_message(group_id, "Initiating commands /tip & /withdraw have a specfic format,\n use them like so:" + "\n \n Parameters: \n user = target user to tip \n amount = amount of zcoin to utilise \n address = zcoin address to withdraw to \n \n Tipping format: \n /tip user amount \n \n Withdrawing format: \n /withdraw address amount")
+                bot.get_updates(offset = update_id+1)
+    except:
+        print('Some kind of error on', text)
+        bot.get_updates(offset = update_id+1)
+starter()
 
-deposit_handler = CommandHandler('deposit', deposit)
-dispatcher.add_handler(deposit_handler)
 
-price_handler = CommandHandler('price', price)
-dispatcher.add_handler(price_handler)
+'''MUST BE ADDED'''
 
-tip_handler = CommandHandler('tip', tip)
-dispatcher.add_handler(tip_handler)
+'''FOR BOT FATHER -> SELECT BOT -> EDIT BOT -> EDIT COMMAND 
 
-balance_handler = CommandHandler('balance', balance)
-dispatcher.add_handler(balance_handler)
+balance - shows balance
+moon - to the moon
+help - available commands
+deposit - get deposit address
+price - shows zcoin price
+marketcap - shows zcoin marketcap
+hi - welcome message
+commands - shows how to use commands
 
-help_handler = CommandHandler('help', help)
-dispatcher.add_handler(help_handler)
-
-updater.start_polling()
-
+EDIT DESCRIPTION AS NEEDED
+'''
