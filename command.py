@@ -27,12 +27,18 @@ class BoilerPlate:
         send = requests.post(self.api_url + function, fieldss).json()
         return send
     
+    def delete_message(self, group_id, message_id):         #FOR DELETING MESSAGES FROM GROUP
+        fieldss = {'chat_id': group_id, 'message_id': message_id}
+        function = 'deleteMessage'
+        send = requests.post(self.api_url + function, fieldss)
+        return send
+    
     def deleteWebhook(self):                #CALL THIS AFTER CURRENT_UPDATE IF THERE IS A WEBHOOK ERROR
         function = 'deleteWebhook'
         send = requests.post(self.api_url + function)
         return send
 
-token = 'BOT_TOKEN'
+token = 'BOT API'
 offset = 0                  #MODIFY TO -1 TO READ ONLY THE LAST MESSAGE AND IGNORE ALL PREVIOUS MESSAGE. OTHERWISE DO NO CHANGE
 bot = BoilerPlate(token)    #bot.get_updates(offset = update_id+1) IS USED TO PREVENT THE BOT FROM READING THE SAME MESSAGE
 
@@ -41,14 +47,16 @@ def starter():
     while True:
         all_updates = bot.get_updates(offset)
         for current_updates in all_updates:
-            #print(current_updates)
             update_id = current_updates['update_id']
             group_id = current_updates['message']['chat']['id']
             sender_id = current_updates['message']['from']['id']
             dict_checker = []
             for keys in current_updates.get('message'):
                 dict_checker.append(keys)
-            bot_message_handler(current_updates, update_id, sender_id, group_id, dict_checker)
+            if 'new_chat_members' in dict_checker or 'left_chat_member' in dict_checker or 'photo' in dict_checker:
+                group_message_handler(current_updates, update_id, sender_id, group_id, dict_checker)
+            else:
+                bot_message_handler(current_updates, update_id, sender_id, group_id, dict_checker)
 
 def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_checker):
     global offset
@@ -212,6 +220,18 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
     except:
         print('Some kind of error on', text)
         bot.get_updates(offset = update_id+1)
+
+def group_message_handler(current_updates, update_id, sender_id, group_id, dict_checker):
+    message_id = current_updates['message']['message_id']
+
+    if 'text' not in dict_checker and sender_id != group_id:
+        if 'photo' in dict_checker:
+            pass
+        else:
+            print('new member joined or left')
+            bot.delete_message(group_id, message_id)
+            bot.get_updates(offset = update_id+1)
+
 if __name__ == "__main__":
     starter()
 
