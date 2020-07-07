@@ -38,7 +38,7 @@ class BoilerPlate:
         send = requests.post(self.api_url + function)
         return send
 
-token = ''
+token = 'BOT TOKEN'
 offset = 0                  #MODIFY TO -1 TO READ ONLY THE LAST MESSAGE AND IGNORE ALL PREVIOUS MESSAGE. OTHERWISE DO NOT CHANGE
 bot = BoilerPlate(token)    #bot.get_updates(offset = update_id+1) IS USED TO PREVENT THE BOT FROM READING THE SAME MESSAGE
 
@@ -47,17 +47,20 @@ def starter():
     while True:
         all_updates = bot.get_updates(offset)
         for current_updates in all_updates:
-            print(current_updates)
-            update_id = current_updates['update_id']
-            group_id = current_updates['message']['chat']['id']
-            sender_id = current_updates['message']['from']['id']
-            dict_checker = []
-            for keys in current_updates.get('message'):
-                dict_checker.append(keys)
-            if 'new_chat_members' in dict_checker or 'left_chat_member' in dict_checker or 'photo' in dict_checker:
-                group_message_handler(current_updates, update_id, sender_id, group_id, dict_checker)
+            #print(current_updates)
+            if 'edited_message' in current_updates:
+                pass
             else:
-                bot_message_handler(current_updates, update_id, sender_id, group_id, dict_checker)
+                update_id = current_updates['update_id']
+                group_id = current_updates['message']['chat']['id']
+                sender_id = current_updates['message']['from']['id']
+                dict_checker = []
+                for keys in current_updates.get('message'):
+                    dict_checker.append(keys)
+                if 'new_chat_members' in dict_checker or 'left_chat_member' in dict_checker or 'photo' in dict_checker:
+                    group_message_handler(current_updates, update_id, sender_id, group_id, dict_checker)
+                else:
+                    bot_message_handler(current_updates, update_id, sender_id, group_id, dict_checker)
 
 def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_checker):
     global offset
@@ -110,10 +113,10 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
         if '/withdraw' in text and len(text) > 9 or '/withdraw@zcointipbot' in text and len(text) > 21:
             if 'username' in current_updates['message']['from']:
                 user = current_updates['message']['from']['username']
-                try:
-                    target = text[21:]
-                    address = target[:47]
-                except:
+                if '/withdraw@zcointipbot' in text:
+                    target = text[22:]
+                    address = target[:48]
+                else:
                     target = text[9:]
                     address = target[:35]
                 address = ''.join(str(e) for e in address)
@@ -129,7 +132,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 else:
                     amount = str(amount)
                     tx = subprocess.run([core,"sendfrom",user,address,amount],stdout=subprocess.PIPE)
-                    bot.send_message(group_id, f'@{user} has successfully withdrew to address: {address} of {amount} RDD')
+                    bot.send_message(group_id, f'@{user} has successfully withdrew to address: {address} of {amount} XZC')
                     bot.get_updates(offset = update_id+1)
             else:
                 bot.send_message(group_id, 'Please set a username from the Telegram Settings')
@@ -185,12 +188,9 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                     target = text[17:]
                 else:
                     target = text[5:]
-                bot.send_message(group_id, target)
                 amount =  target.split(" ")[1]
                 target =  target.split(" ")[0]
                 machine = "@Reddcoin_bot"
-                bot.send_message(group_id, target)
-                bot.send_message(group_id, amount)
                 if target == machine:
                     bot.send_message(group_id, "HODL.")
                     bot.get_updates(offset = update_id+1)
@@ -246,8 +246,6 @@ def group_message_handler(current_updates, update_id, sender_id, group_id, dict_
 if __name__ == "__main__":
     starter()
 
-
-'''MUST BE ADDED'''
 
 '''FOR BOT FATHER -> SELECT BOT -> EDIT BOT -> EDIT COMMAND 
 
