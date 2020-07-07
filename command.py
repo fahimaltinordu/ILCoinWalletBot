@@ -38,7 +38,7 @@ class BoilerPlate:
         send = requests.post(self.api_url + function)
         return send
 
-token = '1097474969:AAFjro39pNaKqdrWy6bZIppX1ZzbM_B6RyY'
+token = ''
 offset = 0                  #MODIFY TO -1 TO READ ONLY THE LAST MESSAGE AND IGNORE ALL PREVIOUS MESSAGE. OTHERWISE DO NOT CHANGE
 bot = BoilerPlate(token)    #bot.get_updates(offset = update_id+1) IS USED TO PREVENT THE BOT FROM READING THE SAME MESSAGE
 
@@ -47,7 +47,7 @@ def starter():
     while True:
         all_updates = bot.get_updates(offset)
         for current_updates in all_updates:
-            #print(current_updates)
+            print(current_updates)
             update_id = current_updates['update_id']
             group_id = current_updates['message']['chat']['id']
             sender_id = current_updates['message']['from']['id']
@@ -181,13 +181,16 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
         if '/tip' in text and len(text) > 4 or '/tip@zcointipbot' in text and len(text) > 16:
             if 'username' in current_updates['message']['from']:
                 user = current_updates['message']['from']['username']
-                try:
-                    target = text[19:]
-                except:
+                if '/tip@zcointipbot' in text:
+                    target = text[16:]
+                else:
                     target = text[5:]
+                bot.send_message(group_id, target)
                 amount =  target.split(" ")[1]
                 target =  target.split(" ")[0]
                 machine = "@Reddcoin_bot"
+                bot.send_message(group_id, target)
+                bot.send_message(group_id, amount)
                 if target == machine:
                     bot.send_message(group_id, "HODL.")
                     bot.get_updates(offset = update_id+1)
