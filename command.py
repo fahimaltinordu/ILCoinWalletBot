@@ -182,7 +182,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
             if 'username' in current_updates['message']['from']:
                 user = current_updates['message']['from']['username']
                 if '/tip@zcointipbot' in text:
-                    target = text[16:]
+                    target = text[17:]
                 else:
                     target = text[5:]
                 bot.send_message(group_id, target)
