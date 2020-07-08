@@ -38,7 +38,7 @@ class BoilerPlate:
         send = requests.post(self.api_url + function)
         return send
 
-token = 'BOT TOKEN'
+token = ''
 offset = 0                  #MODIFY TO -1 TO READ ONLY THE LAST MESSAGE AND IGNORE ALL PREVIOUS MESSAGE. OTHERWISE DO NOT CHANGE
 bot = BoilerPlate(token)    #bot.get_updates(offset = update_id+1) IS USED TO PREVENT THE BOT FROM READING THE SAME MESSAGE
 
@@ -47,16 +47,27 @@ def starter():
     while True:
         all_updates = bot.get_updates(offset)
         for current_updates in all_updates:
-            #print(current_updates)
+           # print(current_updates)
+            update_id = current_updates['update_id']
             if 'edited_message' in current_updates:
+                bot.get_updates(offset = update_id+1)
+                pass
+            if 'poll' in current_updates:
+                bot.get_updates(offset = update_id+1)
+                pass
+            if 'mention' in current_updates:
+                bot.get_updates(offset = update_id+1)
+                pass
+            elif 'text' not in current_updates['message']:
+                bot.get_updates(offset = update_id+1)
                 pass
             else:
-                update_id = current_updates['update_id']
-                group_id = current_updates['message']['chat']['id']
-                sender_id = current_updates['message']['from']['id']
                 dict_checker = []
                 for keys in current_updates.get('message'):
                     dict_checker.append(keys)
+                update_id = current_updates['update_id']
+                group_id = current_updates['message']['chat']['id']
+                sender_id = current_updates['message']['from']['id']
                 if 'new_chat_members' in dict_checker or 'left_chat_member' in dict_checker or 'photo' in dict_checker:
                     group_message_handler(current_updates, update_id, sender_id, group_id, dict_checker)
                 else:
