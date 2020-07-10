@@ -77,17 +77,17 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
     global offset
     text = current_updates['message']['text']
     try:
-        if text == '/start' or text == '/help' or text == '/help@zcointipbot':
+        if text == '/start' or text == '/help' or text == '/help@ilcointipbot':
             bot.send_message(group_id, ("The following commands are at your disposal:\n/hi\n/moon\n/help\n/commands\n/price\n/marketcap\n/balance\n/deposit\n/withdraw\n/tip"))
             bot.get_updates(offset = update_id+1)
 
-        if  text == '/hi' or text == '/hi@zcointipbot':
+        if  text == '/hi' or text == '/hi@ilcointipbot':
             first = current_updates['message']['from']['first_name']
             bot.send_message(group_id, f'Hello {first}, How are you doing today?')
             bot.get_updates(offset = update_id+1)
 
-        if  text == '/price' or text == '/price@zcointipbot':
-            quote_page = requests.get('https://www.worldcoinindex.com/coin/zcoin')
+        if  text == '/price' or text == '/price@ilcointipbot':
+            quote_page = requests.get('https://www.worldcoinindex.com/coin/ilcoin')
             strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
             soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
             name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coinprice'})
@@ -100,14 +100,14 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
             #soup = BeautifulSoup(quote_page.content, 'html.parser').text
             #btc = soup[80:]
             #sats = btc[:-2]
-            bot.send_message(group_id, f'zcoin is valued at {price} Δ {percent}')
+            bot.send_message(group_id, f'ilcoin is valued at {price} Δ {percent}')
             bot.get_updates(offset = update_id+1)
         
 
-        if  text == '/deposit' or text == '/deposit@zcointipbot':
+        if  text == '/deposit' or text == '/deposit@ilcointipbot':
             if 'username' in current_updates['message']['from']:
                 user = current_updates['message']['from']['username']
-                address = "/usr/bin/zcoin-cli"
+                address = "/usr/bin/ilcoin-cli"
                 result = subprocess.run([address,"getaccountaddress",user],stdout=subprocess.PIPE)
                 clean = (result.stdout.strip()).decode("utf-8")
                 bot.send_message(group_id, f'@{user} your depositing address is: {clean}')
@@ -116,15 +116,15 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 bot.send_message(group_id, 'Please set a username from the Telegram Settings')
                 bot.get_updates(offset = update_id+1)
 
-        if  text == '/withdraw' or text == '/withdraw@zcointipbot':
+        if  text == '/withdraw' or text == '/withdraw@ilcointipbot':
             bot.send_message(group_id, 'Wrong Format. Check /commands Send a Message Like this Please:\n\n/withdraw (your wallet address) (amount)\n\nexample:\n\n/withdraw a8ULhhDgfdSiXJhSZVdhb8EuDc6R3ogsaM 5')
             bot.get_updates(offset = update_id+1)
 
 
-        if '/withdraw' in text and len(text) > 9 or '/withdraw@zcointipbot' in text and len(text) > 21:
+        if '/withdraw' in text and len(text) > 9 or '/withdraw@ilcointipbot' in text and len(text) > 21:
             if 'username' in current_updates['message']['from']:
                 user = current_updates['message']['from']['username']
-                if '/withdraw@zcointipbot' in text:
+                if '/withdraw@ilcointipbot' in text:
                     target = text[22:]
                     address = target[:48]
                 else:
@@ -133,7 +133,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 address = ''.join(str(e) for e in address)
                 target = target.replace(target[:35], '')
                 amount = float(target)
-                core = "/usr/bin/zcoin-cli"
+                core = "/usr/bin/ilcoin-cli"
                 result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
                 clean = (result.stdout.strip()).decode("utf-8")
                 balance = float(clean)
@@ -149,9 +149,9 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 bot.send_message(group_id, 'Please set a username from the Telegram Settings')
                 bot.get_updates(offset = update_id+1)
         
-        if  text == '/balance' or text == '/balance@zcointipbot':
+        if  text == '/balance' or text == '/balance@ilcointipbot':
             if 'username' in current_updates['message']['from']:
-                quote_page = requests.get('https://www.worldcoinindex.com/coin/zcoin')
+                quote_page = requests.get('https://www.worldcoinindex.com/coin/ilcoin')
                 strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
                 soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
                 name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coinprice'})
@@ -160,42 +160,42 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 price = re.sub("[^0-9^.]", "", price)
                 price = float(price)
                 user = current_updates['message']['from']['username']
-                core = "/usr/bin/zcoin-cli"
+                core = "/usr/bin/ilcoin-cli"
                 result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
                 clean = (result.stdout.strip()).decode("utf-8")
                 balance  = float(clean)
                 fiat_balance = balance * price
                 fiat_balance = str(round(fiat_balance,3))
                 balance =  str(round(balance,3))
-                bot.send_message(group_id, f'@{user} your current balance is: {balance} zcoin ≈  ${fiat_balance}')
+                bot.send_message(group_id, f'@{user} your current balance is: {balance} ilcoin ≈  ${fiat_balance}')
                 bot.get_updates(offset = update_id+1)
             else:
                 bot.send_message(group_id, 'Please set a username from the Telegram Settings')
                 bot.get_updates(offset = update_id+1)
 
-        if  text == '/moon' or text == '/moon@zcointipbot':
+        if  text == '/moon' or text == '/moon@ilcointipbot':
             bot.send_message(group_id, "Moon mission inbound!")
             bot.get_updates(offset = update_id+1)
 
-        if  text == '/marketcap' or text == '/marketcap@zcointipbot':
-            quote_page = requests.get('https://www.worldcoinindex.com/coin/zcoin')
+        if  text == '/marketcap' or text == '/marketcap@ilcointipbot':
+            quote_page = requests.get('https://www.worldcoinindex.com/coin/ilcoin')
             strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
             soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
             name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coin-marketcap'})
             name = name_box.text.replace("\n","")
             mc = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
-            bot.send_message(group_id, f"The current market cap of zcoin is valued at {mc}")
+            bot.send_message(group_id, f"The current market cap of ilcoin is valued at {mc}")
             bot.get_updates(offset = update_id+1)
 
 
-        if text == '/tip' or text == '/tip@zcointipbot':
+        if text == '/tip' or text == '/tip@ilcointipbot':
             bot.send_message(group_id, 'Wrong Format. Check /commands. Send the command like this\n\n /tip (username) (amount)\n\nexample\n\n /tip @Sakib0194 10')
             bot.get_updates(offset = update_id+1)
 
-        if '/tip' in text and len(text) > 4 or '/tip@zcointipbot' in text and len(text) > 16:
+        if '/tip' in text and len(text) > 4 or '/tip@ilcointipbot' in text and len(text) > 16:
             if 'username' in current_updates['message']['from']:
                 user = current_updates['message']['from']['username']
-                if '/tip@zcointipbot' in text:
+                if '/tip@ilcointipbot' in text:
                     target = text[17:]
                 else:
                     target = text[5:]
@@ -208,7 +208,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 elif "@" in target:
                     target = target[1:]
                     user = current_updates['message']['from']['username']
-                    core = "/usr/bin/zcoin-cli"
+                    core = "/usr/bin/ilcoin-cli"
                     result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
                     balance = float((result.stdout.strip()).decode("utf-8"))
                     amount = float(amount)
@@ -222,7 +222,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                         balance = str(balance)
                         amount = str(amount) 
                         tx = subprocess.run([core,"move",user,target,amount],stdout=subprocess.PIPE)
-                        bot.send_message(group_id, f"@{user} tipped @{target} of {amount} zcoin")
+                        bot.send_message(group_id, f"@{user} tipped @{target} of {amount} ilcoin")
                         bot.get_updates(offset = update_id+1)
                 else: 
                     bot.send_message(group_id, "Error that user is not applicable.")
@@ -231,10 +231,10 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 bot.send_message(group_id, 'Please set a username from the Telegram Settings')
                 bot.get_updates(offset = update_id+1)
 
-        if text == '/commands' or text == '/commands@zcointipbot':
+        if text == '/commands' or text == '/commands@ilcointipbot':
             if 'username' in current_updates['message']['from']:
                 user = current_updates['message']['from']['username']
-                bot.send_message(group_id, "Initiating commands /tip & /withdraw have a specfic format,\n use them like so:" + "\n \n Parameters: \n user = target user to tip \n amount = amount of zcoin to utilise \n address = zcoin address to withdraw to \n \n Tipping format: \n /tip user amount \n \n Withdrawing format: \n /withdraw address amount")
+                bot.send_message(group_id, "Initiating commands /tip & /withdraw have a specfic format,\n use them like so:" + "\n \n Parameters: \n user = target user to tip \n amount = amount of ilcoin to utilise \n address = ilcoin address to withdraw to \n \n Tipping format: \n /tip user amount \n \n Withdrawing format: \n /withdraw address amount")
                 bot.get_updates(offset = update_id+1)
             else:
                 bot.send_message(group_id, 'Please set a username from the Telegram Settings')
@@ -264,8 +264,8 @@ balance - shows balance
 moon - to the moon
 help - available commands
 deposit - get deposit address
-price - shows zcoin price
-marketcap - shows zcoin marketcap
+price - shows ilcoin price
+marketcap - shows ilcoin marketcap
 hi - welcome message
 commands - shows how to use commands
 
