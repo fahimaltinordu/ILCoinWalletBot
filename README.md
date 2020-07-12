@@ -1,6 +1,6 @@
 # **The ILCoin Wallet Bot is live on Telegram!** 
 
-![grab-landing-page](https://github.com/PlusBitPos/ILCoinWalletBot/blob/master/image/ilctip.png)
+![grab-landing-page](https://github.com/PlusBitPos/ILCoinWalletBot/blob/master/image/icon.png)
 
 The ILCoin Wallet Bot is a payment processor built specifically for Telegram so ILCitizens can quickly and easily send each other **ILCoin** **$ILC** for being helpful, being friendly, or for goods and services. 
 
