@@ -100,14 +100,14 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
             #soup = BeautifulSoup(quote_page.content, 'html.parser').text
             #btc = soup[80:]
             #sats = btc[:-2]
-            bot.send_message(group_id, f'ilcoin is valued at {price} Δ {percent}')
+            bot.send_message(group_id, f'ILCoin is valued at {price} Δ {percent}')
             bot.get_updates(offset = update_id+1)
         
 
         if  text == '/deposit' or text == '/deposit@ilcointipbot':
             if 'username' in current_updates['message']['from']:
                 user = current_updates['message']['from']['username']
-                address = "/usr/bin/ilcoin-cli"
+                address = "/usr/local/bin/ilcoin-cli"
                 result = subprocess.run([address,"getaccountaddress",user],stdout=subprocess.PIPE)
                 clean = (result.stdout.strip()).decode("utf-8")
                 bot.send_message(group_id, f'@{user} your depositing address is: {clean}')
@@ -117,7 +117,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 bot.get_updates(offset = update_id+1)
 
         if  text == '/withdraw' or text == '/withdraw@ilcointipbot':
-            bot.send_message(group_id, 'Wrong Format. Check /commands Send a Message Like this Please:\n\n/withdraw (your wallet address) (amount)\n\nexample:\n\n/withdraw a8ULhhDgfdSiXJhSZVdhb8EuDc6R3ogsaM 5')
+            bot.send_message(group_id, 'Wrong Format. Check /commands Send a Message Like this Please:\n\n/withdraw (your wallet address) (amount)\n\nexample:\n\n/withdraw 19rMDYWmGv4PNiF12xL3exkKG23WGMxCwf 5')
             bot.get_updates(offset = update_id+1)
 
 
@@ -133,7 +133,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 address = ''.join(str(e) for e in address)
                 target = target.replace(target[:35], '')
                 amount = float(target)
-                core = "/usr/bin/ilcoin-cli"
+                core = "/usr/local/bin/ilcoin-cli"
                 result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
                 clean = (result.stdout.strip()).decode("utf-8")
                 balance = float(clean)
@@ -143,7 +143,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 else:
                     amount = str(amount)
                     tx = subprocess.run([core,"sendfrom",user,address,amount],stdout=subprocess.PIPE)
-                    bot.send_message(group_id, f'@{user} has successfully withdrew to address: {address} of {amount} XZC')
+                    bot.send_message(group_id, f'@{user} has successfully withdrew to address: {address} of {amount} ILC')
                     bot.get_updates(offset = update_id+1)
             else:
                 bot.send_message(group_id, 'Please set a username from the Telegram Settings')
@@ -160,14 +160,14 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 price = re.sub("[^0-9^.]", "", price)
                 price = float(price)
                 user = current_updates['message']['from']['username']
-                core = "/usr/bin/ilcoin-cli"
+                core = "/usr/local/bin/ilcoin-cli"
                 result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
                 clean = (result.stdout.strip()).decode("utf-8")
                 balance  = float(clean)
                 fiat_balance = balance * price
                 fiat_balance = str(round(fiat_balance,3))
                 balance =  str(round(balance,3))
-                bot.send_message(group_id, f'@{user} your current balance is: {balance} ilcoin ≈  ${fiat_balance}')
+                bot.send_message(group_id, f'@{user} your current balance is: {balance} ILCoin ≈  ${fiat_balance}')
                 bot.get_updates(offset = update_id+1)
             else:
                 bot.send_message(group_id, 'Please set a username from the Telegram Settings')
@@ -184,12 +184,12 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
             name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coin-marketcap'})
             name = name_box.text.replace("\n","")
             mc = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
-            bot.send_message(group_id, f"The current market cap of ilcoin is valued at {mc}")
+            bot.send_message(group_id, f"The current market cap of ILCoin is valued at {mc}")
             bot.get_updates(offset = update_id+1)
 
 
         if text == '/tip' or text == '/tip@ilcointipbot':
-            bot.send_message(group_id, 'Wrong Format. Check /commands. Send the command like this\n\n /tip (username) (amount)\n\nexample\n\n /tip @Sakib0194 10')
+            bot.send_message(group_id, 'Wrong Format. Check /commands. Send the command like this\n\n /tip (username) (amount)\n\nexample\n\n /tip @Fahim_BTX 10')
             bot.get_updates(offset = update_id+1)
 
         if '/tip' in text and len(text) > 4 or '/tip@ilcointipbot' in text and len(text) > 16:
@@ -208,7 +208,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                 elif "@" in target:
                     target = target[1:]
                     user = current_updates['message']['from']['username']
-                    core = "/usr/bin/ilcoin-cli"
+                    core = "/usr/local/bin/ilcoin-cli"
                     result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
                     balance = float((result.stdout.strip()).decode("utf-8"))
                     amount = float(amount)
@@ -222,7 +222,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
                         balance = str(balance)
                         amount = str(amount) 
                         tx = subprocess.run([core,"move",user,target,amount],stdout=subprocess.PIPE)
-                        bot.send_message(group_id, f"@{user} tipped @{target} of {amount} ilcoin")
+                        bot.send_message(group_id, f"@{user} tipped @{target} of {amount} ILCoin")
                         bot.get_updates(offset = update_id+1)
                 else: 
                     bot.send_message(group_id, "Error that user is not applicable.")
@@ -234,7 +234,7 @@ def bot_message_handler(current_updates, update_id, sender_id, group_id, dict_ch
         if text == '/commands' or text == '/commands@ilcointipbot':
             if 'username' in current_updates['message']['from']:
                 user = current_updates['message']['from']['username']
-                bot.send_message(group_id, "Initiating commands /tip & /withdraw have a specfic format,\n use them like so:" + "\n \n Parameters: \n user = target user to tip \n amount = amount of ilcoin to utilise \n address = ilcoin address to withdraw to \n \n Tipping format: \n /tip user amount \n \n Withdrawing format: \n /withdraw address amount")
+                bot.send_message(group_id, "Initiating commands /tip & /withdraw have a specfic format,\n use them like so:" + "\n \n Parameters: \n user = target user to tip \n amount = amount of ILCoin to utilise \n address = ILCoin address to withdraw to \n \n Tipping format: \n /tip user amount \n \n Withdrawing format: \n /withdraw address amount")
                 bot.get_updates(offset = update_id+1)
             else:
                 bot.send_message(group_id, 'Please set a username from the Telegram Settings')
@@ -264,8 +264,8 @@ balance - shows balance
 moon - to the moon
 help - available commands
 deposit - get deposit address
-price - shows ilcoin price
-marketcap - shows ilcoin marketcap
+price - shows ILCoin price
+marketcap - shows ILCoin marketcap
 hi - welcome message
 commands - shows how to use commands
 
