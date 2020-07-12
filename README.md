@@ -1,6 +1,6 @@
-# Ilcointips - Telegram Ilcoin Tipbot.
+# Ilcointips - Telegram ILCoin Tipbot.
  
-#### Ilcoin crypto currency tipbot for [Telegram](https://telegram.org)
+#### ILCoin crypto currency tipbot for [Telegram](https://telegram.org)
 
 
 ## Dependencies 
@@ -10,7 +10,7 @@
 *  `pip3 install beautifulsoup4`
 *  `pip3 install python-telegram-bot --upgrade`
 
-* In order to run the tip-bot effectively, a Bitcoin-core based client is needed. For this git ilcoin-Core is used , but any major alternate crypto-currency client could easily be incorperated. 
+* In order to run the tip-bot effectively, a Bitcoin-core based client is needed. For this git ILCoin-Core is used , but any major alternate crypto-currency client could easily be incorperated. 
 
 ## Setup
 
