@@ -6,6 +6,8 @@ The ILCoin Wallet Bot is a payment processor built specifically for Telegram so 
 
 Every tx takes place instantly and on-chain. We're launching the ILCoinWalletBot now in all of our Telegram chatrooms so please DM the bot (http://t.me/ILCoinWalletBot) to register with it, learn its commands, and start spreading $ILC around to your deserving friends and strangers in the community. 
 
+![grab-landing-page](https://github.com/PlusBitPos/ILCoinWalletBot/blob/master/image/ilctip1.jpg)
+
 If you aren't already on Telegram then find the main room of the ILCitizens on any platform at https://t.me/ILCoinDevelopmentTeam and join us there now!
 
 The bot is live in telegram, you can contact it @ILCoinWalletBot, you can add it to your group, or message it directly.
@@ -18,6 +20,8 @@ Send the command like this;
  /tip (username) (amount)
 example:
  /tip @Fahim_BTX 10
+
+![grab-landing-page](https://github.com/PlusBitPos/ILCoinWalletBot/blob/master/image/ilctip2.jpg)
 
 **Checking your balance**
 You can check your balance in one of ILCoin’s blockchain explorers or asking the bot to show you your /balance
